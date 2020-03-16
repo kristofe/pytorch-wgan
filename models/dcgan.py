@@ -8,6 +8,20 @@ from utils.inception_score import get_inception_score
 from itertools import chain
 from torchvision import utils
 
+'''
+CUDA_VISIBLE_DEVICES=1 python main.py --model DCGAN \
+>                --is_train True \
+>                --download True \
+>                --dataroot datasets/fashion-mnist \
+>                --dataset fashion-mnist \
+>                --epochs 30 \
+>                --cuda True \
+>                --batch_size 64
+
+'''
+
+
+
 class Generator(torch.nn.Module):
     def __init__(self, channels):
         super().__init__()

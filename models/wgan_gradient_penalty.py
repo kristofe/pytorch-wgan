@@ -146,6 +146,7 @@ class WGAN_GP(object):
             d_loss_real = 0
             d_loss_fake = 0
             Wasserstein_D = 0
+            d_loss = 0
             # Train Dicriminator forward-loss-backward-update self.critic_iter times while 1 Generator forward-loss-backward-update
             for d_iter in range(self.critic_iter):
                 self.D.zero_grad()
@@ -248,11 +249,11 @@ class WGAN_GP(object):
                 # ============ TensorBoard logging ============#
                 # (1) Log the scalar values
                 info = {
-                    'Wasserstein distance': Wasserstein_D.data[0],
-                    'Loss D': d_loss.data[0],
-                    'Loss G': g_cost.data[0],
-                    'Loss D Real': d_loss_real.data[0],
-                    'Loss D Fake': d_loss_fake.data[0]
+                    'Wasserstein distance': Wasserstein_D,
+                    'Loss D': d_loss,
+                    'Loss G': g_cost,
+                    'Loss D Real': d_loss_real,
+                    'Loss D Fake': d_loss_fake
 
                 }
 
