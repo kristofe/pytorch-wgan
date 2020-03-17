@@ -260,8 +260,8 @@ class WGAN_GP(object):
 
                 # (3) Log the images
                 info = {
-                    'real_images': self.real_images(images * 0.5 + 0.5, self.number_of_images),
-                    'generated_images': self.generate_img(z, self.number_of_images) * 0.5 + 0.5
+                    'real_images': self.real_images(images, self.number_of_images),
+                    'generated_images': self.generate_img(z, self.number_of_images)
                 }
 
                 for tag, images in info.items():
