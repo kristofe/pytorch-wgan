@@ -84,6 +84,8 @@ class SyntheticImageFolder(torch.utils.data.Dataset):
         assert(data.shape[2] == 1024)
         assert(data.shape[0] == 1)
 
+        img = torch.nn.functional.interpolate(data, size=32)
+        '''
         i = torch.randint(low=0, high=self.num_crops, size=(1,))
         j = torch.randint(low=0, high=self.num_crops, size=(1,))
         xs = i*self.crop_size
@@ -91,6 +93,7 @@ class SyntheticImageFolder(torch.utils.data.Dataset):
         ys = j*self.crop_size
         ye = ys + self.crop_size
         img = data[0:1,ys:ye,xs:xe]
+        '''
 
         return img
 
