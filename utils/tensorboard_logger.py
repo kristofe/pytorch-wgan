@@ -26,10 +26,16 @@ class Logger(object):
         if type(images) == list:
             image_grid = np.stack(images,axis=0)
             image_grid = torch.from_numpy(image_grid)
+            if image_grid.ndim == 3:
+                b,w,h = image_grid.shape
+                image_grid = image_grid.unsqueeze(1).expand(b,3,w,h)
             image_grid = torchvision.utils.make_grid(image_grid,nrows, padding=1)
         else:
             image_grid = torchvision.utils.make_grid(images,nrows, padding=1)
+        
+
         image_grid = image_grid * 0.5 + 0.5
+
         self.writer.add_image(tag, image_grid, step)
 
     def histo_summary(self, tag, values, step, bins=1000):
