@@ -131,11 +131,8 @@ class WGAN_GP(object):
         # Now batches are callable self.data.next()
         self.data = self.get_infinite_batches(train_loader)
 
-        one = torch.FloatTensor([1])
-        mone = one * -1
-        if self.cuda:
-            one = one.cuda(self.cuda_index)
-            mone = mone.cuda(self.cuda_index)
+        #one = torch.FloatTensor(1).cuda()
+        #mone = one * -1
 
         for g_iter in range(self.generator_iters):
 
@@ -147,6 +144,7 @@ class WGAN_GP(object):
             d_loss_fake = 0
             Wasserstein_D = 0
             d_loss = 0
+            images = None
             # Train Dicriminator forward-loss-backward-update self.critic_iter times while 1 Generator forward-loss-backward-update
             for d_iter in range(self.critic_iter):
                 self.D.zero_grad()
@@ -166,8 +164,9 @@ class WGAN_GP(object):
                 # Train discriminator
                 # WGAN - Training discriminator more iterations than generator
                 # Train with real images
-                d_loss_real = self.D(images)
-                d_loss_real = d_loss_real.mean()
+                d_loss_real = self.D(images).mean()
+                one = torch.ones(d_loss_real.shape, dtype=d_loss_real.dtype, device=d_loss_real.device)
+                mone = one * -1
                 d_loss_real.backward(mone)
 
                 # Train with fake images
@@ -176,8 +175,7 @@ class WGAN_GP(object):
                 else:
                     z = Variable(torch.randn(self.batch_size, 100, 1, 1))
                 fake_images = self.G(z)
-                d_loss_fake = self.D(fake_images)
-                d_loss_fake = d_loss_fake.mean()
+                d_loss_fake = self.D(fake_images).mean()
                 d_loss_fake.backward(one)
 
                 # Train with gradient penalty
@@ -262,7 +260,7 @@ class WGAN_GP(object):
 
                 # (3) Log the images
                 info = {
-                    'real_images': self.real_images(images, self.number_of_images),
+                    'real_images': self.real_images(images * 0.5 + 0.5, self.number_of_images),
                     'generated_images': self.generate_img(z, self.number_of_images)
                 }
 
@@ -290,31 +288,25 @@ class WGAN_GP(object):
 
 
     def calculate_gradient_penalty(self, real_images, fake_images):
-        eta = torch.FloatTensor(self.batch_size,1,1,1).uniform_(0,1)
-        eta = eta.expand(self.batch_size, real_images.size(1), real_images.size(2), real_images.size(3))
+        etatmp = torch.FloatTensor(self.batch_size,1,1,1).uniform_(0,1)
+        eta = etatmp.expand(self.batch_size, real_images.size(1), real_images.size(2), real_images.size(3))
         if self.cuda:
             eta = eta.cuda(self.cuda_index)
-        else:
-            eta = eta
 
-        interpolated = eta * real_images + ((1 - eta) * fake_images)
+        interpolatedcpu = eta * real_images + ((1 - eta) * fake_images)
 
         if self.cuda:
-            interpolated = interpolated.cuda(self.cuda_index)
-        else:
-            interpolated = interpolated
+            interpolatedt = interpolatedcpu.cuda(self.cuda_index)
 
         # define it to calculate gradient
-        interpolated = Variable(interpolated, requires_grad=True)
+        interpolated = Variable(interpolatedt, requires_grad=True)
 
         # calculate probability of interpolated examples
         prob_interpolated = self.D(interpolated)
 
         # calculate gradients of probabilities with respect to examples
         gradients = autograd.grad(outputs=prob_interpolated, inputs=interpolated,
-                               grad_outputs=torch.ones(
-                                   prob_interpolated.size()).cuda(self.cuda_index) if self.cuda else torch.ones(
-                                   prob_interpolated.size()),
+                               grad_outputs=torch.ones(prob_interpolated.size()).cuda(self.cuda_index),
                                create_graph=True, retain_graph=True)[0]
 
         grad_penalty = ((gradients.norm(2, dim=1) - 1) ** 2).mean() * self.lambda_term
@@ -322,9 +314,11 @@ class WGAN_GP(object):
 
     def real_images(self, images, number_of_images):
         if (self.C == 3):
-            return self.to_np(images.view(-1, self.C, 32, 32)[:self.number_of_images])
+            #return self.to_np(images.view(-1, self.C, 32, 32)[:self.number_of_images])
+            return images.detach().view(-1, self.C, 32, 32)[:self.number_of_images]
         else:
-            return self.to_np(images.view(-1, 32, 32)[:self.number_of_images])
+            #return self.to_np(images.view(-1, 32, 32)[:self.number_of_images])
+            return images.detach().view(-1, 32, 32)[:self.number_of_images]
 
     def generate_img(self, z, number_of_images):
         samples = self.G(z).data.cpu().numpy()[:number_of_images]

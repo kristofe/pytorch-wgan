@@ -23,10 +23,12 @@ class Logger(object):
     def image_summary(self, tag, images, step, ncols=4):
         """Log a list of images."""
         nrows = math.ceil(len(images))//ncols
-
-        image_grid = np.stack(images,axis=0)
-        image_grid = torch.from_numpy(image_grid)
-        image_grid = torchvision.utils.make_grid(image_grid,nrows, padding=1)
+        if type(images) == list:
+            image_grid = np.stack(images,axis=0)
+            image_grid = torch.from_numpy(image_grid)
+            image_grid = torchvision.utils.make_grid(image_grid,nrows, padding=1)
+        else:
+            image_grid = torchvision.utils.make_grid(images,nrows, padding=1)
         self.writer.add_image(tag, image_grid, step)
 
     def histo_summary(self, tag, values, step, bins=1000):
