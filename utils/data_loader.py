@@ -8,6 +8,7 @@ import torch
 from torchvision import utils
 from torchvision import transforms
 import numpy as np
+from PIL import Image
 
 # Created custom image folder that can handle 16 bit pngs
 class SyntheticImageFolder(torch.utils.data.Dataset):
@@ -67,7 +68,7 @@ class SyntheticImageFolder(torch.utils.data.Dataset):
       self.max = self.cached_images.max()
       print(f"min {self.min}  max {self.max}")
       torch.save(self.cached_images, cache_filename)
-      
+    
     def read_uint16_png(self, filepath):
         with open(filepath, 'rb') as f:
             reader = png.Reader(f)  # png.Reader(filepath)
@@ -80,11 +81,13 @@ class SyntheticImageFolder(torch.utils.data.Dataset):
               pixels_float = pixels_float.unsqueeze(0)
             return pixels_float
     
+
     def rand_grid_crop(self, data):
         assert(data.shape[2] == 1024)
         assert(data.shape[0] == 1)
 
-        img = torch.nn.functional.interpolate(data, size=32)
+        img = torch.nn.functional.interpolate(data.unsqueeze(0), size=32).squeeze()
+
         '''
         i = torch.randint(low=0, high=self.num_crops, size=(1,))
         j = torch.randint(low=0, high=self.num_crops, size=(1,))
