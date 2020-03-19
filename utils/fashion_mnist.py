@@ -200,4 +200,5 @@ def read_image_file(path):
                     row.append(parse_byte(data[idx]))
                     idx += 1
         assert len(images) == length
+        print(f"FASHION MNIST NUM IMAGES: {lenght}")
         return torch.ByteTensor(images).view(-1, 28, 28)
