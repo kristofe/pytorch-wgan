@@ -1,5 +1,6 @@
 import argparse
 import os
+import datetime
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Pytorch implementation of GAN models.")
@@ -37,5 +38,8 @@ def check_args(args):
         args.channels = 3
     else:
         args.channels = 1
+
+    dt = datetime.datetime.now().strftime('%m%d_%H%M%S')
+    args.name = f"{args.model}_{args.dataset}_{dt}"
 
     return args

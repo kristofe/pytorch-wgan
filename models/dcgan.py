@@ -116,7 +116,7 @@ class DCGAN_MODEL(object):
         self.batch_size = args.batch_size
 
         # Set the logger
-        self.logger = Logger('./logs')
+        self.logger = Logger(f'./logs/{args.name}')
         self.number_of_images = 10
 
     # cuda support
@@ -305,8 +305,8 @@ class DCGAN_MODEL(object):
     '''
 
     def generate_img(self, z, number_of_images):
-        samples = self.G(z).data.cpu().numpy()[:number_of_images]
-        samples = self.to_normals(samples)
+        samples = self.G(z)
+        samples = self.to_normals(samples).data.cpu().numpy()[:number_of_images]
         generated_images = []
         for sample in samples:
             if self.C == 3:
