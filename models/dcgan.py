@@ -7,6 +7,7 @@ from utils.tensorboard_logger import Logger
 from utils.inception_score import get_inception_score
 from itertools import chain
 from torchvision import utils
+from utils.heightmap_normals_loss import HeightmapNormalsLoss
 
 '''
 CUDA_VISIBLE_DEVICES=1 python main.py --model DCGAN \
@@ -100,6 +101,7 @@ class DCGAN_MODEL(object):
 
         # binary cross entropy loss and optimizer
         self.loss = nn.BCELoss()
+        self.to_normals = HeightmapNormalsLoss('0', args.dataset != 'terrain') 
 
         self.cuda = "False"
         self.cuda_index = 0
@@ -153,6 +155,7 @@ class DCGAN_MODEL(object):
                     real_labels, fake_labels = Variable(real_labels), Variable(fake_labels)
 
 
+                images = self.to_normals(images)
                 # Train discriminator
                 # Compute BCE_Loss using real images
                 outputs = self.D(images)
@@ -165,6 +168,7 @@ class DCGAN_MODEL(object):
                 else:
                     z = Variable(torch.randn(self.batch_size, 100, 1, 1))
                 fake_images = self.G(z)
+                fake_images = self.to_normals(fake_images)
                 outputs = self.D(fake_images)
                 d_loss_fake = self.loss(outputs, fake_labels)
                 fake_score = outputs
@@ -182,6 +186,7 @@ class DCGAN_MODEL(object):
                 else:
                     z = Variable(torch.randn(self.batch_size, 100, 1, 1))
                 fake_images = self.G(z)
+                fake_images = self.to_normals(fake_images)
                 outputs = self.D(fake_images)
                 g_loss = self.loss(outputs, real_labels)
 
@@ -218,6 +223,7 @@ class DCGAN_MODEL(object):
                     # Denormalize images and save them in grid 8x8
                     z = Variable(torch.randn(800, 100, 1, 1)).cuda(self.cuda_index)
                     samples = self.G(z)
+                    samples = self.to_normals(samples)
                     samples = samples.mul(0.5).add(0.5)
                     samples = samples.data.cpu()[:64]
                     grid = utils.make_grid(samples)
@@ -276,6 +282,7 @@ class DCGAN_MODEL(object):
         self.load_model(D_model_path, G_model_path)
         z = Variable(torch.randn(self.batch_size, 100, 1, 1)).cuda(self.cuda_index)
         samples = self.G(z)
+        samples = self.to_normals(samples)
         samples = samples.mul(0.5).add(0.5)
         samples = samples.data.cpu()
         grid = utils.make_grid(samples)
@@ -284,12 +291,22 @@ class DCGAN_MODEL(object):
 
     def real_images(self, images, number_of_images):
         if (self.C == 3):
+            #return self.to_np(images.view(-1, self.C, 32, 32)[:self.number_of_images])
+            return images.detach().view(-1, self.C, 32, 32)[:self.number_of_images]
+        else:
+            #return self.to_np(images.view(-1, 32, 32)[:self.number_of_images])
+            return images.detach().view(-1, 1, 32, 32)[:self.number_of_images]
+    '''
+    def real_images(self, images, number_of_images):
+        if (self.C == 3):
             return self.to_np(images.view(-1, self.C, 32, 32)[:self.number_of_images])
         else:
             return self.to_np(images.view(-1, 32, 32)[:self.number_of_images])
+    '''
 
     def generate_img(self, z, number_of_images):
         samples = self.G(z).data.cpu().numpy()[:number_of_images]
+        samples = self.to_normals(samples)
         generated_images = []
         for sample in samples:
             if self.C == 3:

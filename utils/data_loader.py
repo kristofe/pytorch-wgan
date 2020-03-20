@@ -37,11 +37,15 @@ class SyntheticImageFolder(torch.utils.data.Dataset):
         counter = 1
         count =  len(self.img_paths)
         for path in self.img_paths:
-            outpath = f"{path[:-4]}_single_channel.png"
+            outpath = f"{path[:-4]}_shrunk_32.png"
             print(f"{count}/{counter} path {path} out {outpath}")
-            os.system(f"~/Applications/magick convert {path} -channel A -separate {outpath}")
+            #os.system(f"~/Applications/magick convert {path} -channel A -separate {outpath}")
+            os.system(f"~/Applications/magick convert -resize 32x32 {path} {outpath}")
             counter += 1
-
+        '''
+        # mv command... for lots of files
+        echo *(*single_channel_shrunk_32.png) | xargs mv -t shrunk
+        '''
 
     
     def normalize01_with_minmax(self, data, data_min, data_max):
@@ -76,7 +80,7 @@ class SyntheticImageFolder(torch.utils.data.Dataset):
       self.min = self.cached_images.min()
       self.max = self.cached_images.max()
       print(f"min {self.min}  max {self.max}")
-      self.cached_images = self.normalize01_with_minmax(self.cached_images, self.min, self.max)
+      #self.cached_images = self.normalize01_with_minmax(self.cached_images, self.min, self.max)
       self.min = self.cached_images.min()
       self.max = self.cached_images.max()
       print(f"min {self.min}  max {self.max}")
@@ -142,7 +146,7 @@ class SyntheticImageFolder(torch.utils.data.Dataset):
             if self.transform is not None:
                 img = self.transform(img)
             #print(f"path {path}  img {img.shape}")
-        img = self.rand_grid_crop(img)
+        #img = self.rand_grid_crop(img)
         return img,img
                 
 
@@ -196,8 +200,8 @@ def get_data_loader(args):
             transforms.Normalize([0.5], [0.5]),
         ])
         crop_size = 32
-        train_dataset = SyntheticImageFolder(root=args.dataroot + "train/", transform=trans, crop_size=crop_size, cache=False)
-        test_dataset = SyntheticImageFolder(root=args.dataroot + "test/", transform=trans, crop_size=crop_size, cache=False)
+        train_dataset = SyntheticImageFolder(root=args.dataroot + "train/", transform=trans, crop_size=crop_size, cache=True)
+        test_dataset = SyntheticImageFolder(root=args.dataroot + "test/", transform=trans, crop_size=crop_size, cache=True)
 
     # Check if everything is ok with loading datasets
     assert train_dataset

@@ -33,7 +33,7 @@ def check_args(args):
     except:
         print('Batch size must be larger than or equal to one')
 
-    if args.dataset == 'cifar' or args.dataset == 'stl10':
+    if args.dataset == 'cifar' or args.dataset == 'stl10' or args.dataset == 'terrain':
         args.channels = 3
     else:
         args.channels = 1
