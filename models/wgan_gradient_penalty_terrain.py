@@ -114,7 +114,7 @@ class WGAN_GP_TERRAIN(object):
         self.number_of_images = 10
 
         self.generator_iters = args.generator_iters
-        self.critic_iter = 10
+        self.critic_iter = args.critic_iters
         self.lambda_term = 10
 
 
