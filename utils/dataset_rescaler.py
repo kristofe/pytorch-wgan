@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor
+
 import torchvision.datasets as dset
 import torchvision.transforms as transforms
 import torch.utils.data as data_utils
@@ -14,6 +16,14 @@ from PIL import Image
 echo *(*single_channel_shrunk_32.png) | xargs mv -t shrunk
 '''
 
+def run_command_for_all_sizes(paths, sizes=[4,8,16,32,64,128], IMG_EXTENSTIONS=['.png']):
+    path, base, filename = paths
+    for size in sizes:
+        outpath = f"{base}/{filename[:-4]}_R{size}.png"
+        #os.system(f"~/Applications/magick convert -resize {size}x{size} {path} {outpath}")
+        print(f"path {path} out {outpath}")
+
+
 class Rescaler:
     def __init__(self, sizes=[4,8,16,32,64,128]):
         #self.IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.pgm']
@@ -29,6 +39,24 @@ class Rescaler:
         return any(filename_lower.endswith(ext) for ext in self.IMG_EXTENSIONS)
 
 
+
+    def convert_mt(self, root):
+
+        images = []
+        for base, _, filenames in sorted(os.walk(root)):
+            for filename in filenames:
+                if self.is_image_file(filename):
+                    images.append((os.path.join(base,filename), base, filename))
+        if len(images) == 0:
+            raise(RuntimeError("No images with extensions {} found in {}".format(
+                str(self.IMG_EXTENSIONS), root)))
+
+        with ThreadPoolExecutor(max_workers=6) as executor:
+            results = executor.map(run_command_for_all_sizes, images)
+        #for result in results:
+        #    print(result)
+
+
     def convert(self, root):
 
         images = []
@@ -42,20 +70,22 @@ class Rescaler:
         counter = 1
 
         count =  len(images)
-        for size in self.sizes:
-            self.ensure_dir_exists(f"{root}/{size}/")
+        #for size in self.sizes:
+        #    self.ensure_dir_exists(f"{root}/{size}/")
 
         for path, base, filename in images:
             for size in self.sizes:
                 #outpath = f"{path[:-4]}_RESCALED_{size}.png"
-                outpath = f"{base}R{size}/{filename[:-4]}_R{size}.png"
+                outpath = f"{base}/{filename[:-4]}_R{size}.png"
                 print(f"{counter}/{count} path {path} out {outpath}")
                 #os.system(f"~/Applications/magick convert {path} -channel A -separate {outpath}")
                 os.system(f"~/Applications/magick convert -resize {size}x{size} {path} {outpath}")
             counter += 1
+            if counter > 20:
+                exit()
 
 if __name__ == "__main__":
     rescaler = Rescaler()
-    rescaler.convert("datasets/erosion_targets50k/256/test/")
-    rescaler.convert("datasets/erosion_targets50k/256/train/")
+    rescaler.convert_mt("datasets/erosion_targets50k/256/test/")
+    #rescaler.convert("datasets/erosion_targets50k/256/train/")
     
